@@ -7,7 +7,6 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
-import os
 import ssl
 from io import StringIO
 from urllib.request import urlopen
@@ -31,20 +30,6 @@ st.set_page_config(
     page_icon="🫀",
     layout="wide",
 )
-
-
-def _secret(name: str, default: str = "") -> str:
-    try:
-        value = st.secrets.get(name, default)
-    except Exception:
-        value = default
-    if value:
-        return str(value)
-    return os.getenv(name.upper(), default)
-
-
-AUTH_USERNAME = _secret("auth_username")
-AUTH_PASSWORD = _secret("auth_password")
 
 
 TECH_CSS = """
@@ -260,48 +245,7 @@ def make_metric_card(label: str, value: str, accent: str, note: str) -> str:
     """
 
 
-def auth_gate() -> None:
-    if st.session_state.get("app_authenticated"):
-        return
-
-    st.markdown(
-        """
-        <div class="hero-shell">
-          <div class="section-kicker">Secure access layer</div>
-          <h1 class="hero-title">Protected clinical dashboard</h1>
-          <p class="hero-subtitle">This deployment uses an app-level login gate to reduce accidental access to the model and patient-style controls. Configure credentials in Streamlit secrets or environment variables before publishing.</p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    if not AUTH_USERNAME or not AUTH_PASSWORD:
-        st.error(
-            "Authentication is not configured. Set auth_username and auth_password in Streamlit secrets or APP_AUTH_USERNAME and APP_AUTH_PASSWORD in the environment."
-        )
-        st.stop()
-
-    with st.form("login_form", clear_on_submit=False):
-        st.subheader("Unlock access")
-        username = st.text_input("Username", placeholder="Enter username")
-        password = st.text_input("Password", type="password", placeholder="Enter password")
-        submitted = st.form_submit_button("Unlock dashboard")
-
-    if submitted:
-        if username == AUTH_USERNAME and password == AUTH_PASSWORD:
-            st.session_state["app_authenticated"] = True
-            st.success("Access granted. Loading the dashboard...")
-            st.rerun()
-        else:
-            st.error("Invalid credentials.")
-
-    st.info("Authentication required before the model and explanations load.")
-    st.stop()
-
-
 st.markdown(TECH_CSS, unsafe_allow_html=True)
-
-auth_gate()
 
 st.markdown(
     """
